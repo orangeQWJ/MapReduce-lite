@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+package client;
+
+
+message FilePath {
+  string ip = 1;    // IP 地址
+  string port = 2;  // 端口
+  string path = 3;  // 文件路径
+}
+
+// 定义文件内容块结构体
+message FileChunk {
+  bytes content = 1;  // 每次返回的数据块
+}
+
+// 定义读取文件请求结构体
+message ReadFileRequest {
+  FilePath file_path = 1;  // 要读取的文件路径
+}
+
+// 定义任务完成汇报请求结构体
+message ReportCompletionRequest {
+  string job_id = 1;
+  repeated FilePath file_paths = 2;  // 完成任务涉及的文件路径列表
+}
+
+// 定义任务完成汇报响应结构体
+message ReportCompletionResponse {
+  bool success = 1;  // 汇报是否成功
+}
+
+service ClientSrvice {
+  // 读取大文件服务，使用流式 RPC 传输数据
+  rpc ReadFile(ReadFileRequest) returns (stream FileChunk);
+  // 汇报任务完成服务
+  rpc ReportCompletion(ReportCompletionRequest) returns (ReportCompletionResponse);
+}
+
