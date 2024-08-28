@@ -51,13 +51,15 @@ class WorkerSrviceServicer(object):
 
     def ReadFile(self, request, context):
         """读取大文件服务，使用流式 RPC 传输数据
+        worker->worker, client->worker
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
     def JustDoIt(self, request, context):
-        """Missing associated documentation comment in .proto file."""
+        """master->worker, master 下发m/r task
+        """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')

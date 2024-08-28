@@ -13,23 +13,33 @@ class TaskType(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
 M: TaskType
 R: TaskType
 
-class FilePath(_message.Message):
-    __slots__ = ("ip", "port", "path")
-    IP_FIELD_NUMBER: _ClassVar[int]
-    PORT_FIELD_NUMBER: _ClassVar[int]
-    PATH_FIELD_NUMBER: _ClassVar[int]
-    ip: str
-    port: str
-    path: str
-    def __init__(self, ip: _Optional[str] = ..., port: _Optional[str] = ..., path: _Optional[str] = ...) -> None: ...
-
-class RegisterWorkerRequest(_message.Message):
+class ServerAddress(_message.Message):
     __slots__ = ("ip", "port")
     IP_FIELD_NUMBER: _ClassVar[int]
     PORT_FIELD_NUMBER: _ClassVar[int]
     ip: str
-    port: str
-    def __init__(self, ip: _Optional[str] = ..., port: _Optional[str] = ...) -> None: ...
+    port: int
+    def __init__(self, ip: _Optional[str] = ..., port: _Optional[int] = ...) -> None: ...
+
+class FilePath(_message.Message):
+    __slots__ = ("serverAddress", "path")
+    SERVERADDRESS_FIELD_NUMBER: _ClassVar[int]
+    PATH_FIELD_NUMBER: _ClassVar[int]
+    serverAddress: ServerAddress
+    path: str
+    def __init__(self, serverAddress: _Optional[_Union[ServerAddress, _Mapping]] = ..., path: _Optional[str] = ...) -> None: ...
+
+class FileChunk(_message.Message):
+    __slots__ = ("content",)
+    CONTENT_FIELD_NUMBER: _ClassVar[int]
+    content: bytes
+    def __init__(self, content: _Optional[bytes] = ...) -> None: ...
+
+class RegisterWorkerRequest(_message.Message):
+    __slots__ = ("server_add",)
+    SERVER_ADD_FIELD_NUMBER: _ClassVar[int]
+    server_add: ServerAddress
+    def __init__(self, server_add: _Optional[_Union[ServerAddress, _Mapping]] = ...) -> None: ...
 
 class RegisterWorkerResponse(_message.Message):
     __slots__ = ("success",)
@@ -38,16 +48,16 @@ class RegisterWorkerResponse(_message.Message):
     def __init__(self, success: bool = ...) -> None: ...
 
 class ReportTaskRequest(_message.Message):
-    __slots__ = ("job_id", "task_type", "task_id", "file_paths")
-    JOB_ID_FIELD_NUMBER: _ClassVar[int]
-    TASK_TYPE_FIELD_NUMBER: _ClassVar[int]
-    TASK_ID_FIELD_NUMBER: _ClassVar[int]
-    FILE_PATHS_FIELD_NUMBER: _ClassVar[int]
-    job_id: str
-    task_type: TaskType
-    task_id: int
-    file_paths: _containers.RepeatedCompositeFieldContainer[FilePath]
-    def __init__(self, job_id: _Optional[str] = ..., task_type: _Optional[_Union[TaskType, str]] = ..., task_id: _Optional[int] = ..., file_paths: _Optional[_Iterable[_Union[FilePath, _Mapping]]] = ...) -> None: ...
+    __slots__ = ("jobID", "taskType", "taskID", "filePaths")
+    JOBID_FIELD_NUMBER: _ClassVar[int]
+    TASKTYPE_FIELD_NUMBER: _ClassVar[int]
+    TASKID_FIELD_NUMBER: _ClassVar[int]
+    FILEPATHS_FIELD_NUMBER: _ClassVar[int]
+    jobID: str
+    taskType: TaskType
+    taskID: int
+    filePaths: _containers.RepeatedCompositeFieldContainer[FilePath]
+    def __init__(self, jobID: _Optional[str] = ..., taskType: _Optional[_Union[TaskType, str]] = ..., taskID: _Optional[int] = ..., filePaths: _Optional[_Iterable[_Union[FilePath, _Mapping]]] = ...) -> None: ...
 
 class ReportTaskResponse(_message.Message):
     __slots__ = ("success",)
@@ -56,25 +66,23 @@ class ReportTaskResponse(_message.Message):
     def __init__(self, success: bool = ...) -> None: ...
 
 class UploadTaskRequest(_message.Message):
-    __slots__ = ("M_count", "R_count", "ip", "port", "python_file_path", "file_paths")
-    M_COUNT_FIELD_NUMBER: _ClassVar[int]
-    R_COUNT_FIELD_NUMBER: _ClassVar[int]
-    IP_FIELD_NUMBER: _ClassVar[int]
-    PORT_FIELD_NUMBER: _ClassVar[int]
-    PYTHON_FILE_PATH_FIELD_NUMBER: _ClassVar[int]
-    FILE_PATHS_FIELD_NUMBER: _ClassVar[int]
-    M_count: int
-    R_count: int
-    ip: str
-    port: str
-    python_file_path: FilePath
-    file_paths: _containers.RepeatedCompositeFieldContainer[FilePath]
-    def __init__(self, M_count: _Optional[int] = ..., R_count: _Optional[int] = ..., ip: _Optional[str] = ..., port: _Optional[str] = ..., python_file_path: _Optional[_Union[FilePath, _Mapping]] = ..., file_paths: _Optional[_Iterable[_Union[FilePath, _Mapping]]] = ...) -> None: ...
+    __slots__ = ("mNum", "rNum", "serverAddress", "mapReduceFuncPath", "filePaths")
+    MNUM_FIELD_NUMBER: _ClassVar[int]
+    RNUM_FIELD_NUMBER: _ClassVar[int]
+    SERVERADDRESS_FIELD_NUMBER: _ClassVar[int]
+    MAPREDUCEFUNCPATH_FIELD_NUMBER: _ClassVar[int]
+    FILEPATHS_FIELD_NUMBER: _ClassVar[int]
+    mNum: int
+    rNum: int
+    serverAddress: ServerAddress
+    mapReduceFuncPath: FilePath
+    filePaths: _containers.RepeatedCompositeFieldContainer[FilePath]
+    def __init__(self, mNum: _Optional[int] = ..., rNum: _Optional[int] = ..., serverAddress: _Optional[_Union[ServerAddress, _Mapping]] = ..., mapReduceFuncPath: _Optional[_Union[FilePath, _Mapping]] = ..., filePaths: _Optional[_Iterable[_Union[FilePath, _Mapping]]] = ...) -> None: ...
 
 class UploadTaskResponse(_message.Message):
-    __slots__ = ("job_id", "Success")
-    JOB_ID_FIELD_NUMBER: _ClassVar[int]
+    __slots__ = ("jobID", "success")
+    JOBID_FIELD_NUMBER: _ClassVar[int]
     SUCCESS_FIELD_NUMBER: _ClassVar[int]
-    job_id: str
-    Success: bool
-    def __init__(self, job_id: _Optional[str] = ..., Success: bool = ...) -> None: ...
+    jobID: str
+    success: bool
+    def __init__(self, jobID: _Optional[str] = ..., success: bool = ...) -> None: ...

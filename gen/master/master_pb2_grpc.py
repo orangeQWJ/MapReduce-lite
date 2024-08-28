@@ -57,21 +57,21 @@ class MasterServiceServicer(object):
     """
 
     def UploadTask(self, request, context):
-        """上传任务服务
+        """client -> master, 提交一个总的计算任务
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
     def RegisterWorker(self, request, context):
-        """Worker 注册服务
+        """worker -> master, worker向master注册
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
     def ReportTaskCompletion(self, request, context):
-        """Worker 汇报任务完成服务
+        """worker -> master, 完成m/r Task后汇报
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')

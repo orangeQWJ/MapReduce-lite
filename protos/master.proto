@@ -2,22 +2,21 @@ syntax = "proto3";
 
 package master;
 
-// 定义文件路径结构体
+// 找到一个rpc服务
+message ServerAddress {
+  string ip = 1;
+  int32 port = 2;
+}
+
+// 从哪一个服务中获取哪个文件
 message FilePath {
-  string ip = 1;    // IP 地址
-  string port = 2;  // 端口
-  string path = 3;  // 文件路径
+  ServerAddress serverAddress = 1;
+  string path = 2;
 }
 
-// 定义 Worker 注册请求结构体
-message RegisterWorkerRequest {
-  string ip = 1;    // Worker 的 IP 地址
-  string port = 2;  // Worker 的端口
-}
-
-// 定义 Worker 注册响应
-message RegisterWorkerResponse {
-  bool success = 1;  // 注册是否成功
+// 定义文件内容块结构体
+message FileChunk {
+  bytes content = 1;  // 每次返回的数据块
 }
 
 // 定义任务类型枚举
@@ -26,45 +25,53 @@ enum TaskType {
   R = 1;  // Reduce 任务
 }
 
+// 定义 Worker 注册请求结构体
+message RegisterWorkerRequest {
+	ServerAddress server_add = 1;
+}
+
+// 定义 Worker 注册响应
+message RegisterWorkerResponse {
+	bool success = 1;  // 注册是否成功
+}
+
 // 定义任务汇报请求结构体
 message ReportTaskRequest {
- string job_id = 1;
-  TaskType task_type = 2;           // 任务类型
-  int32 task_id = 3;                // 任务编号
-  repeated FilePath file_paths = 4; // 任务涉及的文件路径列表
+	string jobID = 1;
+	TaskType taskType = 2;           // 任务类型
+	int32 taskID = 3;                // 任务编号
+	repeated FilePath filePaths = 4; // 任务涉及的文件路径列表
 }
 
 // 定义任务汇报响应
 message ReportTaskResponse {
-  bool success = 1;  // 汇报是否成功
+	bool success = 1;  // 汇报是否成功
 }
 
 // 定义上传任务的请求
 message UploadTaskRequest {
-  int32 M_count = 1;
-  int32 R_count = 2;
-  string ip = 3;
-  string port = 4;
-  FilePath python_file_path = 5;
-  repeated FilePath file_paths = 6;
+	int32 mNum = 1;
+	int32 rNum = 2;
+	ServerAddress serverAddress = 3;
+	FilePath mapReduceFuncPath = 4;
+	repeated FilePath filePaths = 5;
 }
 
 // 定义上传任务的响应
 message UploadTaskResponse {
-  //repeated FilePath file_paths = 1;
-  string job_id = 1;
-  bool Success = 2;
+	string jobID = 1;
+	bool success = 2;
 }
 
 // 定义 MasterService 服务
 service MasterService {
-  // 上传任务服务
-  rpc UploadTask (UploadTaskRequest) returns (UploadTaskResponse);
+// client -> master, 提交一个总的计算任务
+rpc UploadTask (UploadTaskRequest) returns (UploadTaskResponse);
 
-  // Worker 注册服务
-  rpc RegisterWorker (RegisterWorkerRequest) returns (RegisterWorkerResponse);
+// worker -> master, worker向master注册
+rpc RegisterWorker (RegisterWorkerRequest) returns (RegisterWorkerResponse);
 
-  // Worker 汇报任务完成服务
-  rpc ReportTaskCompletion (ReportTaskRequest) returns (ReportTaskResponse);
+// worker -> master, 完成m/r Task后汇报
+rpc ReportTaskCompletion (ReportTaskRequest) returns (ReportTaskResponse);
 }
 

@@ -24,29 +24,33 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0cmaster.proto\x12\x06master\"2\n\x08\x46ilePath\x12\n\n\x02ip\x18\x01 \x01(\t\x12\x0c\n\x04port\x18\x02 \x01(\t\x12\x0c\n\x04path\x18\x03 \x01(\t\"1\n\x15RegisterWorkerRequest\x12\n\n\x02ip\x18\x01 \x01(\t\x12\x0c\n\x04port\x18\x02 \x01(\t\")\n\x16RegisterWorkerResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\"\x7f\n\x11ReportTaskRequest\x12\x0e\n\x06job_id\x18\x01 \x01(\t\x12#\n\ttask_type\x18\x02 \x01(\x0e\x32\x10.master.TaskType\x12\x0f\n\x07task_id\x18\x03 \x01(\x05\x12$\n\nfile_paths\x18\x04 \x03(\x0b\x32\x10.master.FilePath\"%\n\x12ReportTaskResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\"\xa1\x01\n\x11UploadTaskRequest\x12\x0f\n\x07M_count\x18\x01 \x01(\x05\x12\x0f\n\x07R_count\x18\x02 \x01(\x05\x12\n\n\x02ip\x18\x03 \x01(\t\x12\x0c\n\x04port\x18\x04 \x01(\t\x12*\n\x10python_file_path\x18\x05 \x01(\x0b\x32\x10.master.FilePath\x12$\n\nfile_paths\x18\x06 \x03(\x0b\x32\x10.master.FilePath\"5\n\x12UploadTaskResponse\x12\x0e\n\x06job_id\x18\x01 \x01(\t\x12\x0f\n\x07Success\x18\x02 \x01(\x08*\x18\n\x08TaskType\x12\x05\n\x01M\x10\x00\x12\x05\n\x01R\x10\x01\x32\xf4\x01\n\rMasterService\x12\x43\n\nUploadTask\x12\x19.master.UploadTaskRequest\x1a\x1a.master.UploadTaskResponse\x12O\n\x0eRegisterWorker\x12\x1d.master.RegisterWorkerRequest\x1a\x1e.master.RegisterWorkerResponse\x12M\n\x14ReportTaskCompletion\x12\x19.master.ReportTaskRequest\x1a\x1a.master.ReportTaskResponseb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0cmaster.proto\x12\x06master\")\n\rServerAddress\x12\n\n\x02ip\x18\x01 \x01(\t\x12\x0c\n\x04port\x18\x02 \x01(\x05\"F\n\x08\x46ilePath\x12,\n\rserverAddress\x18\x01 \x01(\x0b\x32\x15.master.ServerAddress\x12\x0c\n\x04path\x18\x02 \x01(\t\"\x1c\n\tFileChunk\x12\x0f\n\x07\x63ontent\x18\x01 \x01(\x0c\"B\n\x15RegisterWorkerRequest\x12)\n\nserver_add\x18\x01 \x01(\x0b\x32\x15.master.ServerAddress\")\n\x16RegisterWorkerResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\"{\n\x11ReportTaskRequest\x12\r\n\x05jobID\x18\x01 \x01(\t\x12\"\n\x08taskType\x18\x02 \x01(\x0e\x32\x10.master.TaskType\x12\x0e\n\x06taskID\x18\x03 \x01(\x05\x12#\n\tfilePaths\x18\x04 \x03(\x0b\x32\x10.master.FilePath\"%\n\x12ReportTaskResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\"\xaf\x01\n\x11UploadTaskRequest\x12\x0c\n\x04mNum\x18\x01 \x01(\x05\x12\x0c\n\x04rNum\x18\x02 \x01(\x05\x12,\n\rserverAddress\x18\x03 \x01(\x0b\x32\x15.master.ServerAddress\x12+\n\x11mapReduceFuncPath\x18\x04 \x01(\x0b\x32\x10.master.FilePath\x12#\n\tfilePaths\x18\x05 \x03(\x0b\x32\x10.master.FilePath\"4\n\x12UploadTaskResponse\x12\r\n\x05jobID\x18\x01 \x01(\t\x12\x0f\n\x07success\x18\x02 \x01(\x08*\x18\n\x08TaskType\x12\x05\n\x01M\x10\x00\x12\x05\n\x01R\x10\x01\x32\xf4\x01\n\rMasterService\x12\x43\n\nUploadTask\x12\x19.master.UploadTaskRequest\x1a\x1a.master.UploadTaskResponse\x12O\n\x0eRegisterWorker\x12\x1d.master.RegisterWorkerRequest\x1a\x1e.master.RegisterWorkerResponse\x12M\n\x14ReportTaskCompletion\x12\x19.master.ReportTaskRequest\x1a\x1a.master.ReportTaskResponseb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'master_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   DESCRIPTOR._loaded_options = None
-  _globals['_TASKTYPE']._serialized_start=557
-  _globals['_TASKTYPE']._serialized_end=581
-  _globals['_FILEPATH']._serialized_start=24
-  _globals['_FILEPATH']._serialized_end=74
-  _globals['_REGISTERWORKERREQUEST']._serialized_start=76
-  _globals['_REGISTERWORKERREQUEST']._serialized_end=125
-  _globals['_REGISTERWORKERRESPONSE']._serialized_start=127
-  _globals['_REGISTERWORKERRESPONSE']._serialized_end=168
-  _globals['_REPORTTASKREQUEST']._serialized_start=170
-  _globals['_REPORTTASKREQUEST']._serialized_end=297
-  _globals['_REPORTTASKRESPONSE']._serialized_start=299
-  _globals['_REPORTTASKRESPONSE']._serialized_end=336
-  _globals['_UPLOADTASKREQUEST']._serialized_start=339
-  _globals['_UPLOADTASKREQUEST']._serialized_end=500
-  _globals['_UPLOADTASKRESPONSE']._serialized_start=502
-  _globals['_UPLOADTASKRESPONSE']._serialized_end=555
-  _globals['_MASTERSERVICE']._serialized_start=584
-  _globals['_MASTERSERVICE']._serialized_end=828
+  _globals['_TASKTYPE']._serialized_start=676
+  _globals['_TASKTYPE']._serialized_end=700
+  _globals['_SERVERADDRESS']._serialized_start=24
+  _globals['_SERVERADDRESS']._serialized_end=65
+  _globals['_FILEPATH']._serialized_start=67
+  _globals['_FILEPATH']._serialized_end=137
+  _globals['_FILECHUNK']._serialized_start=139
+  _globals['_FILECHUNK']._serialized_end=167
+  _globals['_REGISTERWORKERREQUEST']._serialized_start=169
+  _globals['_REGISTERWORKERREQUEST']._serialized_end=235
+  _globals['_REGISTERWORKERRESPONSE']._serialized_start=237
+  _globals['_REGISTERWORKERRESPONSE']._serialized_end=278
+  _globals['_REPORTTASKREQUEST']._serialized_start=280
+  _globals['_REPORTTASKREQUEST']._serialized_end=403
+  _globals['_REPORTTASKRESPONSE']._serialized_start=405
+  _globals['_REPORTTASKRESPONSE']._serialized_end=442
+  _globals['_UPLOADTASKREQUEST']._serialized_start=445
+  _globals['_UPLOADTASKREQUEST']._serialized_end=620
+  _globals['_UPLOADTASKRESPONSE']._serialized_start=622
+  _globals['_UPLOADTASKRESPONSE']._serialized_end=674
+  _globals['_MASTERSERVICE']._serialized_start=703
+  _globals['_MASTERSERVICE']._serialized_end=947
 # @@protoc_insertion_point(module_scope)

@@ -50,14 +50,15 @@ class ClientSrviceServicer(object):
     """Missing associated documentation comment in .proto file."""
 
     def ReadFile(self, request, context):
-        """读取大文件服务，使用流式 RPC 传输数据
+        """worker -> client, worker从client获取文件，执行Map Task
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
     def ReportCompletion(self, request, context):
-        """汇报任务完成服务
+        """master -> client, master 向client汇报，整个任务都完成了
+        并告知client去哪里拉取分散在worker节点中，Reduce任务的产物
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')

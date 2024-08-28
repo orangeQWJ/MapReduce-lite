@@ -24,25 +24,27 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0cworker.proto\x12\x06worker\"2\n\x08\x46ilePath\x12\n\n\x02ip\x18\x01 \x01(\t\x12\x0c\n\x04port\x18\x02 \x01(\t\x12\x0c\n\x04path\x18\x03 \x01(\t\"\x1c\n\tFileChunk\x12\x0f\n\x07\x63ontent\x18\x01 \x01(\x0c\"6\n\x0fReadFileRequest\x12#\n\tfile_path\x18\x01 \x01(\x0b\x32\x10.worker.FilePath\"\xa8\x01\n\x0eJustDoItRquest\x12\x0e\n\x06job_id\x18\x01 \x01(\t\x12#\n\ttask_type\x18\x02 \x01(\x0e\x32\x10.worker.TaskType\x12\x0f\n\x07task_id\x18\x03 \x01(\x05\x12*\n\x10python_file_path\x18\x04 \x01(\x0b\x32\x10.worker.FilePath\x12$\n\nfile_paths\x18\x05 \x03(\x0b\x32\x10.worker.FilePath\"#\n\x10JustDoItResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08*\x18\n\x08TaskType\x12\x05\n\x01M\x10\x00\x12\x05\n\x01R\x10\x01\x32\x86\x01\n\x0cWorkerSrvice\x12\x38\n\x08ReadFile\x12\x17.worker.ReadFileRequest\x1a\x11.worker.FileChunk0\x01\x12<\n\x08JustDoIt\x12\x16.worker.JustDoItRquest\x1a\x18.worker.JustDoItResponseb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x0cworker.proto\x12\x06worker\")\n\rServerAddress\x12\n\n\x02ip\x18\x01 \x01(\t\x12\x0c\n\x04port\x18\x02 \x01(\x05\"F\n\x08\x46ilePath\x12,\n\rserverAddress\x18\x01 \x01(\x0b\x32\x15.worker.ServerAddress\x12\x0c\n\x04path\x18\x02 \x01(\t\"\x1c\n\tFileChunk\x12\x0f\n\x07\x63ontent\x18\x01 \x01(\x0c\"6\n\x0fReadFileRequest\x12#\n\tfile_path\x18\x01 \x01(\x0b\x32\x10.worker.FilePath\"\xa8\x01\n\x0eJustDoItRquest\x12\x0e\n\x06job_id\x18\x01 \x01(\t\x12#\n\ttask_type\x18\x02 \x01(\x0e\x32\x10.worker.TaskType\x12\x0f\n\x07task_id\x18\x03 \x01(\x05\x12*\n\x10python_file_path\x18\x04 \x01(\x0b\x32\x10.worker.FilePath\x12$\n\nfile_paths\x18\x05 \x03(\x0b\x32\x10.worker.FilePath\"#\n\x10JustDoItResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08*\x18\n\x08TaskType\x12\x05\n\x01M\x10\x00\x12\x05\n\x01R\x10\x01\x32\x86\x01\n\x0cWorkerSrvice\x12\x38\n\x08ReadFile\x12\x17.worker.ReadFileRequest\x1a\x11.worker.FileChunk0\x01\x12<\n\x08JustDoIt\x12\x16.worker.JustDoItRquest\x1a\x18.worker.JustDoItResponseb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'worker_pb2', _globals)
 if not _descriptor._USE_C_DESCRIPTORS:
   DESCRIPTOR._loaded_options = None
-  _globals['_TASKTYPE']._serialized_start=370
-  _globals['_TASKTYPE']._serialized_end=394
-  _globals['_FILEPATH']._serialized_start=24
-  _globals['_FILEPATH']._serialized_end=74
-  _globals['_FILECHUNK']._serialized_start=76
-  _globals['_FILECHUNK']._serialized_end=104
-  _globals['_READFILEREQUEST']._serialized_start=106
-  _globals['_READFILEREQUEST']._serialized_end=160
-  _globals['_JUSTDOITRQUEST']._serialized_start=163
-  _globals['_JUSTDOITRQUEST']._serialized_end=331
-  _globals['_JUSTDOITRESPONSE']._serialized_start=333
-  _globals['_JUSTDOITRESPONSE']._serialized_end=368
-  _globals['_WORKERSRVICE']._serialized_start=397
-  _globals['_WORKERSRVICE']._serialized_end=531
+  _globals['_TASKTYPE']._serialized_start=433
+  _globals['_TASKTYPE']._serialized_end=457
+  _globals['_SERVERADDRESS']._serialized_start=24
+  _globals['_SERVERADDRESS']._serialized_end=65
+  _globals['_FILEPATH']._serialized_start=67
+  _globals['_FILEPATH']._serialized_end=137
+  _globals['_FILECHUNK']._serialized_start=139
+  _globals['_FILECHUNK']._serialized_end=167
+  _globals['_READFILEREQUEST']._serialized_start=169
+  _globals['_READFILEREQUEST']._serialized_end=223
+  _globals['_JUSTDOITRQUEST']._serialized_start=226
+  _globals['_JUSTDOITRQUEST']._serialized_end=394
+  _globals['_JUSTDOITRESPONSE']._serialized_start=396
+  _globals['_JUSTDOITRESPONSE']._serialized_end=431
+  _globals['_WORKERSRVICE']._serialized_start=460
+  _globals['_WORKERSRVICE']._serialized_end=594
 # @@protoc_insertion_point(module_scope)

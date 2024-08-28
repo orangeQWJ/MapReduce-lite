@@ -13,15 +13,21 @@ class TaskType(int, metaclass=_enum_type_wrapper.EnumTypeWrapper):
 M: TaskType
 R: TaskType
 
-class FilePath(_message.Message):
-    __slots__ = ("ip", "port", "path")
+class ServerAddress(_message.Message):
+    __slots__ = ("ip", "port")
     IP_FIELD_NUMBER: _ClassVar[int]
     PORT_FIELD_NUMBER: _ClassVar[int]
-    PATH_FIELD_NUMBER: _ClassVar[int]
     ip: str
-    port: str
+    port: int
+    def __init__(self, ip: _Optional[str] = ..., port: _Optional[int] = ...) -> None: ...
+
+class FilePath(_message.Message):
+    __slots__ = ("serverAddress", "path")
+    SERVERADDRESS_FIELD_NUMBER: _ClassVar[int]
+    PATH_FIELD_NUMBER: _ClassVar[int]
+    serverAddress: ServerAddress
     path: str
-    def __init__(self, ip: _Optional[str] = ..., port: _Optional[str] = ..., path: _Optional[str] = ...) -> None: ...
+    def __init__(self, serverAddress: _Optional[_Union[ServerAddress, _Mapping]] = ..., path: _Optional[str] = ...) -> None: ...
 
 class FileChunk(_message.Message):
     __slots__ = ("content",)
