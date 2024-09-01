@@ -65,7 +65,7 @@ class ReportTaskResponse(_message.Message):
     success: bool
     def __init__(self, success: bool = ...) -> None: ...
 
-class UploadTaskRequest(_message.Message):
+class UploadJobRequest(_message.Message):
     __slots__ = ("mapNum", "reduceNum", "serverAddress", "mapReduceFuncPath", "filePaths")
     MAPNUM_FIELD_NUMBER: _ClassVar[int]
     REDUCENUM_FIELD_NUMBER: _ClassVar[int]
@@ -79,7 +79,7 @@ class UploadTaskRequest(_message.Message):
     filePaths: _containers.RepeatedCompositeFieldContainer[FilePath]
     def __init__(self, mapNum: _Optional[int] = ..., reduceNum: _Optional[int] = ..., serverAddress: _Optional[_Union[ServerAddress, _Mapping]] = ..., mapReduceFuncPath: _Optional[_Union[FilePath, _Mapping]] = ..., filePaths: _Optional[_Iterable[_Union[FilePath, _Mapping]]] = ...) -> None: ...
 
-class UploadTaskResponse(_message.Message):
+class UploadJobResponse(_message.Message):
     __slots__ = ("jobID", "success")
     JOBID_FIELD_NUMBER: _ClassVar[int]
     SUCCESS_FIELD_NUMBER: _ClassVar[int]
@@ -90,8 +90,8 @@ class UploadTaskResponse(_message.Message):
 class ReadFileRequest(_message.Message):
     __slots__ = ("filePath",)
     FILEPATH_FIELD_NUMBER: _ClassVar[int]
-    filePath: FilePath
-    def __init__(self, filePath: _Optional[_Union[FilePath, _Mapping]] = ...) -> None: ...
+    filePath: str
+    def __init__(self, filePath: _Optional[str] = ...) -> None: ...
 
 class ReportCompletionRequest(_message.Message):
     __slots__ = ("jobID", "filePaths")

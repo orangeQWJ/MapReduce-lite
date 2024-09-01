@@ -1,48 +1,83 @@
+from concurrent import futures
 import grpc
-from gen.master.master_pb2 import UploadTaskRequest
-from gen.master.master_pb2_grpc import MasterServiceStub
-from gen.common.common_pb2 import FilePath, ServerAddress
+import threading
+
+from gen.service_pb2 import *
+from gen import service_pb2_grpc as A
+
+from typing import Iterator
+
+from util import *
 
 
-masterIP = "localhost"
-masterPort = 50051
+class ClientServiver(A.ClientServicer):
+    def ReadFile(self, request: ReadFileRequest, context: grpc.ServicerContext) -> Iterator[FileChunk]:
+        file_content = b"Hello, world!"
+        yield FileChunk(content=file_content)
+        filePath = request.filePath
+        with open(filePath, 'rb') as file:
+            while True:
+                piece = file.read(1024)
+                if not piece:
+                    break
+                yield FileChunk(content=piece)
 
-def upload_task(m_num :int, r_num: int, funcPath: str, file_paths):
-    masterServerAddress = f"{masterIP}:{masterPort} "
-    channel = grpc.insecure_channel(masterServerAddress)
-    stub = MasterServiceStub(channel)
+    def ReportCompletion(self, request: ReportCompletionRequest, context: grpc.ServicerContext) -> ReportCompletionResponse:
+        print(f"ReportCompletion request received: {request.jobID}")
+        for path in request.filePaths:
+            print(
+                f"serverAddress: {path.serverAddress.ip}:{path.serverAddress.port}, path: {path.path}")
+            # TODO: 通过rpc 拉取这些文件
+        return ReportCompletionResponse(success=True)
 
-    filePathList = [FilePath(ServerAddress(ip="Client_IP_ADDRESS", port=7789797), path=fp) for fp in file_paths]
-    funcPath1 = FilePath(ServerAddress(ip="Client_IP_ADDRESS", port=7789797), path=funcPath)
 
-    request = UploadTaskRequest(
-        mNum=m_num,
-        rNum=r_num,
-        serverAddress=ServerAddress(ip="IP_ADDRESS", port=50052), 
-        mapReduceFuncPath=funcPath1,
-        filePaths= filePathList
+Client_IP = get_lan_ip()
+Client_Port = 0
+
+
+def serve() -> None:
+    global Client_Port
+    server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
+    A.add_ClientServicer_to_server(ClientServiver(), server)
+    Client_Port = server.add_insecure_port(f"{Client_IP}:{0}")
+    server.start()
+    server.wait_for_termination()
+
+
+def run_server_in_background() -> None:
+    server_thread = threading.Thread(target=serve, daemon=True)
+    server_thread.start()
+    print(f"Server started on {Client_IP}:{Client_Port}")
+
+
+MasterIP = "localhost"
+MasterPort = 50051
+
+
+def uploadjob(M: int, N: int, mapReduceFuncPath: str, hugeFilePath: str):
+    master_server_add = f"{MasterIP}:{MasterPort}"
+    splited_file_paths = simple_split_file(hugeFilePath, M)
+    channel = grpc.insecure_channel(master_server_add)
+    stub = A.MasterStub(channel)
+
+    filePaths = [FilePath(serverAddress=ServerAddress(
+        ip="ClientIP", port=50051), path=x) for x in splited_file_paths]
+
+    request = UploadJobRequest(
+        mapNum=M,
+        reduceNum=N,
+        serverAddress=ServerAddress(ip="ClientIP", port=888888),
+        mapReduceFuncPath=FilePath(serverAddress=ServerAddress(
+            ip="ClientIP", port=50051), path=mapReduceFuncPath),
+        filePaths=filePaths
     )
-    response = stub.UploadTask(request)
 
+    # 调用服务
+    response = stub.UploadJob(request)
+    # 打印响应
+    print("UploadTask response:", response)
     channel.close()
-    return response
-
-upload_task(m_num=2, r_num=3, funcPath="mapReducePath", file_paths=["filePath1", "twofilePath"])
-
-import socket
-
-def get_local_ip():
-    # 创建一个socket对象
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    # 不需要真的连接，只是为了获取IP地址
-    s.connect(("8.8.8.8", 80))
-    ip = s.getsockname()[0]
-    s.close()
-    return ip
 
 
-
-if __name__ == "__main__":
-    # 填写服务器地址
-    server_address = "localhost:50051"
-
+uploadjob(4, 3, "mapReduceFuncPath",
+          "/Users/bytedance/code/MapReduce-lite/test/hugefile.txt")

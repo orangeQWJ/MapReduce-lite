@@ -25,7 +25,7 @@ if _version_not_supported:
     )
 
 
-class MasterServiceStub(object):
+class MasterStub(object):
     """定义 MasterService 服务
     """
 
@@ -35,28 +35,28 @@ class MasterServiceStub(object):
         Args:
             channel: A grpc.Channel.
         """
-        self.UploadTask = channel.unary_unary(
-                '/master.MasterService/UploadTask',
-                request_serializer=service__pb2.UploadTaskRequest.SerializeToString,
-                response_deserializer=service__pb2.UploadTaskResponse.FromString,
+        self.UploadJob = channel.unary_unary(
+                '/master.Master/UploadJob',
+                request_serializer=service__pb2.UploadJobRequest.SerializeToString,
+                response_deserializer=service__pb2.UploadJobResponse.FromString,
                 _registered_method=True)
         self.RegisterWorker = channel.unary_unary(
-                '/master.MasterService/RegisterWorker',
+                '/master.Master/RegisterWorker',
                 request_serializer=service__pb2.RegisterWorkerRequest.SerializeToString,
                 response_deserializer=service__pb2.RegisterWorkerResponse.FromString,
                 _registered_method=True)
         self.ReportTaskCompletion = channel.unary_unary(
-                '/master.MasterService/ReportTaskCompletion',
+                '/master.Master/ReportTaskCompletion',
                 request_serializer=service__pb2.ReportTaskRequest.SerializeToString,
                 response_deserializer=service__pb2.ReportTaskResponse.FromString,
                 _registered_method=True)
 
 
-class MasterServiceServicer(object):
+class MasterServicer(object):
     """定义 MasterService 服务
     """
 
-    def UploadTask(self, request, context):
+    def UploadJob(self, request, context):
         """client -> master, 提交一个总的计算任务
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
@@ -78,12 +78,12 @@ class MasterServiceServicer(object):
         raise NotImplementedError('Method not implemented!')
 
 
-def add_MasterServiceServicer_to_server(servicer, server):
+def add_MasterServicer_to_server(servicer, server):
     rpc_method_handlers = {
-            'UploadTask': grpc.unary_unary_rpc_method_handler(
-                    servicer.UploadTask,
-                    request_deserializer=service__pb2.UploadTaskRequest.FromString,
-                    response_serializer=service__pb2.UploadTaskResponse.SerializeToString,
+            'UploadJob': grpc.unary_unary_rpc_method_handler(
+                    servicer.UploadJob,
+                    request_deserializer=service__pb2.UploadJobRequest.FromString,
+                    response_serializer=service__pb2.UploadJobResponse.SerializeToString,
             ),
             'RegisterWorker': grpc.unary_unary_rpc_method_handler(
                     servicer.RegisterWorker,
@@ -97,18 +97,18 @@ def add_MasterServiceServicer_to_server(servicer, server):
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'master.MasterService', rpc_method_handlers)
+            'master.Master', rpc_method_handlers)
     server.add_generic_rpc_handlers((generic_handler,))
-    server.add_registered_method_handlers('master.MasterService', rpc_method_handlers)
+    server.add_registered_method_handlers('master.Master', rpc_method_handlers)
 
 
  # This class is part of an EXPERIMENTAL API.
-class MasterService(object):
+class Master(object):
     """定义 MasterService 服务
     """
 
     @staticmethod
-    def UploadTask(request,
+    def UploadJob(request,
             target,
             options=(),
             channel_credentials=None,
@@ -121,9 +121,9 @@ class MasterService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/master.MasterService/UploadTask',
-            service__pb2.UploadTaskRequest.SerializeToString,
-            service__pb2.UploadTaskResponse.FromString,
+            '/master.Master/UploadJob',
+            service__pb2.UploadJobRequest.SerializeToString,
+            service__pb2.UploadJobResponse.FromString,
             options,
             channel_credentials,
             insecure,
@@ -148,7 +148,7 @@ class MasterService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/master.MasterService/RegisterWorker',
+            '/master.Master/RegisterWorker',
             service__pb2.RegisterWorkerRequest.SerializeToString,
             service__pb2.RegisterWorkerResponse.FromString,
             options,
@@ -175,7 +175,7 @@ class MasterService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/master.MasterService/ReportTaskCompletion',
+            '/master.Master/ReportTaskCompletion',
             service__pb2.ReportTaskRequest.SerializeToString,
             service__pb2.ReportTaskResponse.FromString,
             options,
@@ -189,7 +189,7 @@ class MasterService(object):
             _registered_method=True)
 
 
-class ClientServiceStub(object):
+class ClientStub(object):
     """Missing associated documentation comment in .proto file."""
 
     def __init__(self, channel):
@@ -199,18 +199,18 @@ class ClientServiceStub(object):
             channel: A grpc.Channel.
         """
         self.ReadFile = channel.unary_stream(
-                '/master.ClientService/ReadFile',
+                '/master.Client/ReadFile',
                 request_serializer=service__pb2.ReadFileRequest.SerializeToString,
                 response_deserializer=service__pb2.FileChunk.FromString,
                 _registered_method=True)
         self.ReportCompletion = channel.unary_unary(
-                '/master.ClientService/ReportCompletion',
+                '/master.Client/ReportCompletion',
                 request_serializer=service__pb2.ReportCompletionRequest.SerializeToString,
                 response_deserializer=service__pb2.ReportCompletionResponse.FromString,
                 _registered_method=True)
 
 
-class ClientServiceServicer(object):
+class ClientServicer(object):
     """Missing associated documentation comment in .proto file."""
 
     def ReadFile(self, request, context):
@@ -229,7 +229,7 @@ class ClientServiceServicer(object):
         raise NotImplementedError('Method not implemented!')
 
 
-def add_ClientServiceServicer_to_server(servicer, server):
+def add_ClientServicer_to_server(servicer, server):
     rpc_method_handlers = {
             'ReadFile': grpc.unary_stream_rpc_method_handler(
                     servicer.ReadFile,
@@ -243,13 +243,13 @@ def add_ClientServiceServicer_to_server(servicer, server):
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'master.ClientService', rpc_method_handlers)
+            'master.Client', rpc_method_handlers)
     server.add_generic_rpc_handlers((generic_handler,))
-    server.add_registered_method_handlers('master.ClientService', rpc_method_handlers)
+    server.add_registered_method_handlers('master.Client', rpc_method_handlers)
 
 
  # This class is part of an EXPERIMENTAL API.
-class ClientService(object):
+class Client(object):
     """Missing associated documentation comment in .proto file."""
 
     @staticmethod
@@ -266,7 +266,7 @@ class ClientService(object):
         return grpc.experimental.unary_stream(
             request,
             target,
-            '/master.ClientService/ReadFile',
+            '/master.Client/ReadFile',
             service__pb2.ReadFileRequest.SerializeToString,
             service__pb2.FileChunk.FromString,
             options,
@@ -293,7 +293,7 @@ class ClientService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/master.ClientService/ReportCompletion',
+            '/master.Client/ReportCompletion',
             service__pb2.ReportCompletionRequest.SerializeToString,
             service__pb2.ReportCompletionResponse.FromString,
             options,
@@ -307,7 +307,7 @@ class ClientService(object):
             _registered_method=True)
 
 
-class WorkerServiceStub(object):
+class WorkerStub(object):
     """Missing associated documentation comment in .proto file."""
 
     def __init__(self, channel):
@@ -317,18 +317,18 @@ class WorkerServiceStub(object):
             channel: A grpc.Channel.
         """
         self.ReadFile = channel.unary_stream(
-                '/master.WorkerService/ReadFile',
+                '/master.Worker/ReadFile',
                 request_serializer=service__pb2.ReadFileRequest.SerializeToString,
                 response_deserializer=service__pb2.FileChunk.FromString,
                 _registered_method=True)
         self.JustDoIt = channel.unary_unary(
-                '/master.WorkerService/JustDoIt',
+                '/master.Worker/JustDoIt',
                 request_serializer=service__pb2.JustDoItRequest.SerializeToString,
                 response_deserializer=service__pb2.JustDoItResponse.FromString,
                 _registered_method=True)
 
 
-class WorkerServiceServicer(object):
+class WorkerServicer(object):
     """Missing associated documentation comment in .proto file."""
 
     def ReadFile(self, request, context):
@@ -347,7 +347,7 @@ class WorkerServiceServicer(object):
         raise NotImplementedError('Method not implemented!')
 
 
-def add_WorkerServiceServicer_to_server(servicer, server):
+def add_WorkerServicer_to_server(servicer, server):
     rpc_method_handlers = {
             'ReadFile': grpc.unary_stream_rpc_method_handler(
                     servicer.ReadFile,
@@ -361,13 +361,13 @@ def add_WorkerServiceServicer_to_server(servicer, server):
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'master.WorkerService', rpc_method_handlers)
+            'master.Worker', rpc_method_handlers)
     server.add_generic_rpc_handlers((generic_handler,))
-    server.add_registered_method_handlers('master.WorkerService', rpc_method_handlers)
+    server.add_registered_method_handlers('master.Worker', rpc_method_handlers)
 
 
  # This class is part of an EXPERIMENTAL API.
-class WorkerService(object):
+class Worker(object):
     """Missing associated documentation comment in .proto file."""
 
     @staticmethod
@@ -384,7 +384,7 @@ class WorkerService(object):
         return grpc.experimental.unary_stream(
             request,
             target,
-            '/master.WorkerService/ReadFile',
+            '/master.Worker/ReadFile',
             service__pb2.ReadFileRequest.SerializeToString,
             service__pb2.FileChunk.FromString,
             options,
@@ -411,7 +411,7 @@ class WorkerService(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/master.WorkerService/JustDoIt',
+            '/master.Worker/JustDoIt',
             service__pb2.JustDoItRequest.SerializeToString,
             service__pb2.JustDoItResponse.FromString,
             options,
