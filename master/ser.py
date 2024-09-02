@@ -1,19 +1,56 @@
+from enum import Enum
 from concurrent import futures
 import grpc
 import threading
 import time
+import uuid
 
 from gen.service_pb2 import *
-from gen import service_pb2_grpc as A
+from gen import service_pb2_grpc as B
+
+JOBDICT = {}
 
 
-class MasterServicer(A.MasterServicer):
+class JobStatus(Enum):
+    WAITING = "waiting"
+    MAPPING = "mapping"
+    REDUCING = "reducing"
+    FINISH = "finished"
+
+import queue
+
+jobQueue = queue.Queue()
+taskQueue = queue.Queue()
+
+
+
+
+class MasterServicer(B.MasterServicer):
     def UploadJob(self, request: UploadJobRequest, context: grpc.ServicerContext) -> UploadJobResponse:
-        # print(f"UploadTask called with: {request}")
-        #print(f"request: {request}")
         for path in request.filePaths:
             print(path.path)
-        return UploadJobResponse(jobID="exampleJobID", success=True)
+        jobID = str(uuid.uuid4())
+        job ={
+            "mapNum": request.mapNum,
+            "reduceNum": request.reduceNum,
+            "clientServerAddress": {
+                "ip": request.serverAddress.ip,
+                "port": request.serverAddress.port
+            },
+            "mapReduceFuncPath": {"ip": request.mapReduceFuncPath.serverAddress.ip,
+                                  "port": request.mapReduceFuncPath.serverAddress.port,
+                                  "path": request.mapReduceFuncPath.path
+                                  },
+            "mapfilePaths": [{"ip": path.serverAddress.ip,
+                              "port": path.serverAddress.port,
+                              "path": path.path} for path in request.filePaths],
+            "middleFilePaths": [[None for _ in range(request.reduceNum)] for _ in range(request.mapNum)],
+            "status": JobStatus.WAITING,
+
+        }
+        JOBDICT[jobID] = job
+        jobQueue.put(job)
+        return UploadJobResponse(jobID=jobID, success=True)
 
     def RegisterWorker(self, request: RegisterWorkerRequest, context: grpc.ServicerContext) -> RegisterWorkerResponse:
         print(f"RegisterWorker called with: {request}")
@@ -23,12 +60,14 @@ class MasterServicer(A.MasterServicer):
         print(f"ReportTaskCompletion called with: {request}")
         return ReportTaskResponse(success=True)
 
+
 Master_IP = "localhost"
 Master_Port = 50051
 
+
 def serve() -> None:
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=100))
-    A.add_MasterServicer_to_server(MasterServicer(), server)
+    B.add_MasterServicer_to_server(MasterServicer(), server)
     serverAddress = f"{Master_IP}:{Master_Port}"
     server.add_insecure_port(serverAddress)
     server.start()
@@ -51,3 +90,17 @@ if __name__ == '__main__':
         time.sleep(20)
         pass
 
+jobDict = {
+    "jobID": "exampleJobID",
+    "mapNum": 2,
+    "reduceNum": 2,
+    "userserverAddress": {
+        "ip": "IP_ADDRESS",
+        "port": 50051
+    },
+    "mapReduceFuncPath": {
+        "path": "examplePath"
+    },
+
+
+}
