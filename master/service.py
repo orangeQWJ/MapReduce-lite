@@ -10,8 +10,10 @@ import grpc
 
 from gen import service_pb2 as A
 from gen import service_pb2_grpc as B
+import utils
 
 
+worker_heartbeat_dict: utils.ExpiringDict = utils.ExpiringDict()
 # 任务执行的阶段
 
 
@@ -38,6 +40,8 @@ class serverAddress:
         self.ip: str = ip
         self.port: int = port
 
+    def identity(self):
+        return f"{self.ip}:{self.port}"
 
 class filePath:
     def __init__(self, server: serverAddress, path: str):
@@ -85,6 +89,50 @@ class Task:
         self.task_type: taskType = task_type
         self.file_path: List[filePath] = file_path
 
+
+class taskProgress():
+    def __init__(self, task: Task,  interval: int = 10):
+        self.task: Task = task
+        self.task_status: taskStatus = taskStatus.WAITING
+        self.task_allocation_time: None | int = None
+        self.worker: serverAddress | None = None
+        # 查询间隔
+        self.query_interval: int = interval
+
+    def cancel(self) -> None:
+        self.task_status = taskStatus.WAITING
+        self.task_allocation_time = None
+        self.worker = None
+
+    def check_worker_alive(self) -> bool:
+        assert self.worker != None
+        if worker_heartbeat_dict.get(self.worker.identity()) == None:
+            return False
+        return True
+
+    def re_put_task_to_queue(self) -> None:
+        taskQueue.put(self.task)
+
+    def check_worker_alive_loop(self) -> None:
+        while True:
+            if self.task_status == taskStatus.WAITING:
+                time.sleep(1)
+                pass
+
+            elif self.task_status == taskStatus.FINISH:
+                return
+
+            assert self.task_status == taskStatus.DOING
+            assert self.worker != None, "DOING 状态一定分配了worker"
+            if not self.check_worker_alive():
+                self.task_status = taskStatus.WAITING
+                self.task_allocation_time = None
+                self.worker = None
+                # TODO: Log
+                self.re_put_task_to_queue()
+            time.sleep(self.query_interval)
+
+
         # 记录正在执行的任务
 JOB_DICT: Dict[str, Job] = dict()
 
@@ -96,7 +144,7 @@ taskQueue = queue.Queue()
 workerQueue = queue.Queue()
 
 
-def generate_map_task():
+def generate_map_task_from_Queue():
     """
     生成map task
     将job队列中的任务取出，并拆分成map task
@@ -132,6 +180,11 @@ class MasterServicer(B.MasterServicer):
         return A.RegisterWorkerResponse(success=True)
 
     def ReportTaskCompletion(self, request: A.ReportTaskRequest, context: grpc.ServicerContext) -> A.ReportTaskResponse:
+        # 更新任务状态
+        job: Job = JOB_DICT[request.jobID]
+        with job.lock:
+            pass
+
         print(f"ReportTaskCompletion called with: {request}")
         return A.ReportTaskResponse(success=True)
 
@@ -164,3 +217,76 @@ if __name__ == '__main__':
         print("滴答")
         time.sleep(20)
         pass
+
+
+class ExpiringDict:
+    def __init__(self):
+        self.store = {}  # 存储数据的字典
+        self.timers = {}  # 存储计时器的字典
+
+    def set(self, key, value):
+        if key in self.store:
+            self.reset_timer(key)  # 如果键已存在，重置计时器
+        else:
+            self.store[key] = value  # 存储新数据
+            self.start_timer(key)    # 启动新的计时器
+
+    def start_timer(self, key):
+        timer = threading.Timer(60.0, self._remove, args=(key,))
+        timer.start()
+        self.timers[key] = timer  # 存储计时器
+
+    def reset_timer(self, key):
+        if key in self.timers:
+            self.timers[key].cancel()  # 取消当前计时器
+            del self.timers[key]         # 从存储中删除计时器
+        self.start_timer(key)          # 重新启动计时器
+
+    def _remove(self, key):
+        if key in self.store:
+            del self.store[key]
+            print(f"键 '{key}' 的值已在60秒后被删除。")
+        if key in self.timers:
+            del self.timers[key]  # 从计时器字典中删除
+
+    def get(self, key):
+        value = self.store.get(key, None)
+        if value is not None:
+            self.reset_timer(key)  # 如果存在，则重置计时器
+        return value
+
+    def __repr__(self):
+        return repr(self.store)
+
+
+# 示例
+expiring_dict = ExpiringDict()
+
+# 添加一些值到字典
+expiring_dict.set("key1", "value1")
+print("当前字典：", expiring_dict)
+
+# 等待10秒，访问 key1
+time.sleep(10)
+print("访问 'key1'：", expiring_dict.get("key1"))  # 访问，重置计时器
+print("访问后字典：", expiring_dict)
+
+# 等待60秒，key1不应该被删除
+time.sleep(60)
+print("60秒后字典：", expiring_dict)
+
+# 再次访问 key1，重置计时器
+print("再次访问 'key1'：", expiring_dict.get("key1"))
+print("再次访问后字典：", expiring_dict)
+
+# 再次等待60秒后，key1应该仍然存在
+time.sleep(60)
+print("120秒后字典：", expiring_dict)
+
+# 添加另一个值
+expiring_dict.set("key2", "value2")
+print("添加key2后字典：", expiring_dict)
+
+# 等待70秒，以确认key2被删除
+time.sleep(70)
+print("70秒后字典：", expiring_dict)
