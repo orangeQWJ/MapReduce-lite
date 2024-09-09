@@ -36,17 +36,17 @@ class MasterStub(object):
             channel: A grpc.Channel.
         """
         self.UploadJob = channel.unary_unary(
-                '/master.Master/UploadJob',
+                '/service.Master/UploadJob',
                 request_serializer=service__pb2.UploadJobRequest.SerializeToString,
                 response_deserializer=service__pb2.UploadJobResponse.FromString,
                 _registered_method=True)
         self.RegisterWorker = channel.unary_unary(
-                '/master.Master/RegisterWorker',
+                '/service.Master/RegisterWorker',
                 request_serializer=service__pb2.RegisterWorkerRequest.SerializeToString,
                 response_deserializer=service__pb2.RegisterWorkerResponse.FromString,
                 _registered_method=True)
         self.ReportTaskCompletion = channel.unary_unary(
-                '/master.Master/ReportTaskCompletion',
+                '/service.Master/ReportTaskCompletion',
                 request_serializer=service__pb2.ReportTaskRequest.SerializeToString,
                 response_deserializer=service__pb2.ReportTaskResponse.FromString,
                 _registered_method=True)
@@ -97,9 +97,9 @@ def add_MasterServicer_to_server(servicer, server):
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'master.Master', rpc_method_handlers)
+            'service.Master', rpc_method_handlers)
     server.add_generic_rpc_handlers((generic_handler,))
-    server.add_registered_method_handlers('master.Master', rpc_method_handlers)
+    server.add_registered_method_handlers('service.Master', rpc_method_handlers)
 
 
  # This class is part of an EXPERIMENTAL API.
@@ -121,7 +121,7 @@ class Master(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/master.Master/UploadJob',
+            '/service.Master/UploadJob',
             service__pb2.UploadJobRequest.SerializeToString,
             service__pb2.UploadJobResponse.FromString,
             options,
@@ -148,7 +148,7 @@ class Master(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/master.Master/RegisterWorker',
+            '/service.Master/RegisterWorker',
             service__pb2.RegisterWorkerRequest.SerializeToString,
             service__pb2.RegisterWorkerResponse.FromString,
             options,
@@ -175,7 +175,7 @@ class Master(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/master.Master/ReportTaskCompletion',
+            '/service.Master/ReportTaskCompletion',
             service__pb2.ReportTaskRequest.SerializeToString,
             service__pb2.ReportTaskResponse.FromString,
             options,
@@ -199,12 +199,12 @@ class ClientStub(object):
             channel: A grpc.Channel.
         """
         self.ReadFile = channel.unary_stream(
-                '/master.Client/ReadFile',
+                '/service.Client/ReadFile',
                 request_serializer=service__pb2.ReadFileRequest.SerializeToString,
                 response_deserializer=service__pb2.FileChunk.FromString,
                 _registered_method=True)
         self.ReportCompletion = channel.unary_unary(
-                '/master.Client/ReportCompletion',
+                '/service.Client/ReportCompletion',
                 request_serializer=service__pb2.ReportCompletionRequest.SerializeToString,
                 response_deserializer=service__pb2.ReportCompletionResponse.FromString,
                 _registered_method=True)
@@ -243,9 +243,9 @@ def add_ClientServicer_to_server(servicer, server):
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'master.Client', rpc_method_handlers)
+            'service.Client', rpc_method_handlers)
     server.add_generic_rpc_handlers((generic_handler,))
-    server.add_registered_method_handlers('master.Client', rpc_method_handlers)
+    server.add_registered_method_handlers('service.Client', rpc_method_handlers)
 
 
  # This class is part of an EXPERIMENTAL API.
@@ -266,7 +266,7 @@ class Client(object):
         return grpc.experimental.unary_stream(
             request,
             target,
-            '/master.Client/ReadFile',
+            '/service.Client/ReadFile',
             service__pb2.ReadFileRequest.SerializeToString,
             service__pb2.FileChunk.FromString,
             options,
@@ -293,7 +293,7 @@ class Client(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/master.Client/ReportCompletion',
+            '/service.Client/ReportCompletion',
             service__pb2.ReportCompletionRequest.SerializeToString,
             service__pb2.ReportCompletionResponse.FromString,
             options,
@@ -317,12 +317,12 @@ class WorkerStub(object):
             channel: A grpc.Channel.
         """
         self.ReadFile = channel.unary_stream(
-                '/master.Worker/ReadFile',
+                '/service.Worker/ReadFile',
                 request_serializer=service__pb2.ReadFileRequest.SerializeToString,
                 response_deserializer=service__pb2.FileChunk.FromString,
                 _registered_method=True)
         self.JustDoIt = channel.unary_unary(
-                '/master.Worker/JustDoIt',
+                '/service.Worker/JustDoIt',
                 request_serializer=service__pb2.JustDoItRequest.SerializeToString,
                 response_deserializer=service__pb2.JustDoItResponse.FromString,
                 _registered_method=True)
@@ -361,9 +361,9 @@ def add_WorkerServicer_to_server(servicer, server):
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'master.Worker', rpc_method_handlers)
+            'service.Worker', rpc_method_handlers)
     server.add_generic_rpc_handlers((generic_handler,))
-    server.add_registered_method_handlers('master.Worker', rpc_method_handlers)
+    server.add_registered_method_handlers('service.Worker', rpc_method_handlers)
 
 
  # This class is part of an EXPERIMENTAL API.
@@ -384,7 +384,7 @@ class Worker(object):
         return grpc.experimental.unary_stream(
             request,
             target,
-            '/master.Worker/ReadFile',
+            '/service.Worker/ReadFile',
             service__pb2.ReadFileRequest.SerializeToString,
             service__pb2.FileChunk.FromString,
             options,
@@ -411,7 +411,7 @@ class Worker(object):
         return grpc.experimental.unary_unary(
             request,
             target,
-            '/master.Worker/JustDoIt',
+            '/service.Worker/JustDoIt',
             service__pb2.JustDoItRequest.SerializeToString,
             service__pb2.JustDoItResponse.FromString,
             options,

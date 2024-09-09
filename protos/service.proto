@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package master;
+package service;
 
 // 找到一个rpc服务
 message ServerAddress {

@@ -1,83 +1,51 @@
-from concurrent import futures
 import grpc
-import threading
 
 from gen.service_pb2 import *
 from gen import service_pb2_grpc as A
 
-from typing import Iterator
 
 from util import *
 
-
-class ClientServiver(A.ClientServicer):
-    def ReadFile(self, request: ReadFileRequest, context: grpc.ServicerContext) -> Iterator[FileChunk]:
-        file_content = b"Hello, world!"
-        yield FileChunk(content=file_content)
-        filePath = request.filePath
-        with open(filePath, 'rb') as file:
-            while True:
-                piece = file.read(1024)
-                if not piece:
-                    break
-                yield FileChunk(content=piece)
-
-    def ReportCompletion(self, request: ReportCompletionRequest, context: grpc.ServicerContext) -> ReportCompletionResponse:
-        print(f"ReportCompletion request received: {request.jobID}")
-        for path in request.filePaths:
-            print(
-                f"serverAddress: {path.serverAddress.ip}:{path.serverAddress.port}, path: {path.path}")
-            # TODO: 通过rpc 拉取这些文件
-        return ReportCompletionResponse(success=True)
+from config import MASTER_IP, MASTER_PORT
 
 
-Client_IP = get_lan_ip()
-Client_Port = 0
+CLIENT_IP = get_lan_ip()
+CLIENT_PORT = 0
+
+JOB_ID = ""
 
 
-def serve() -> None:
-    global Client_Port
-    server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-    A.add_ClientServicer_to_server(ClientServiver(), server)
-    Client_Port = server.add_insecure_port(f"{Client_IP}:{0}")
-    server.start()
-    server.wait_for_termination()
-
-
-def run_server_in_background() -> None:
-    server_thread = threading.Thread(target=serve, daemon=True)
-    server_thread.start()
-    print(f"Server started on {Client_IP}:{Client_Port}")
-
-
-MasterIP = "localhost"
-MasterPort = 50051
-
-
-def uploadjob(M: int, N: int, mapReduceFuncPath: str, hugeFilePath: str):
-    master_server_add = f"{MasterIP}:{MasterPort}"
-    splited_file_paths = simple_split_file(hugeFilePath, M)
+def upload_job(M: int, N: int, map_reduce_func_path: str, huge_file_path: str):
+    master_server_add = f"{MASTER_IP}:{MASTER_PORT}"
     channel = grpc.insecure_channel(master_server_add)
     stub = A.MasterStub(channel)
 
-    filePaths = [FilePath(serverAddress=ServerAddress(
-        ip="ClientIP", port=50051), path=x) for x in splited_file_paths]
+    splited_file_paths = simple_split_file(huge_file_path, M)
+
+    client_server_add = ServerAddress(ip=CLIENT_IP, port=CLIENT_PORT)
+
+    file_path_list = [FilePath(serverAddress=client_server_add, path=x)
+                      for x in splited_file_paths]
 
     request = UploadJobRequest(
         mapNum=M,
         reduceNum=N,
-        serverAddress=ServerAddress(ip="ClientIP", port=888888),
-        mapReduceFuncPath=FilePath(serverAddress=ServerAddress(
-            ip="ClientIP", port=50051), path=mapReduceFuncPath),
-        filePaths=filePaths
+        serverAddress=client_server_add,
+        mapReduceFuncPath=FilePath(
+            client_server_add, path=map_reduce_func_path),
+        filePaths=file_path_list
     )
 
     # 调用服务
-    response = stub.UploadJob(request)
+    global JOB_ID
+    response: UploadJobResponse = stub.UploadJob(request)
+    JOB_ID = response.jobID
+
     # 打印响应
+    # TODO: 处理response
     print("UploadTask response:", response)
     channel.close()
 
 
-uploadjob(4, 3, "mapReduceFuncPath",
-          "/Users/bytedance/code/MapReduce-lite/test/hugefile.txt")
+upload_job(4, 3, "mapReduceFuncPath",
+           "/Users/bytedance/code/MapReduce-lite/test/hugefile.txt")
