@@ -3,7 +3,7 @@ from enum import Enum
 import queue
 import threading
 import time
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional
 import uuid
 
 import grpc
@@ -22,12 +22,15 @@ class jobStatus(Enum):
     MAPPING = "mapping"
     REDUCING = "reducing"
     FINISH = "finished"
+    FAILED = "failed"
 
 
 class taskStatus(Enum):
-    WAITING = "waiting"
-    DOING = "doing"
-    FINISH = "finished"
+    WAITING = "waiting"  # 还没加入队列
+    QUEUE = "queue"  # 在队列中
+    DOING = "doing"  # 已经分配给worker
+    FINISH = "finished"  # 顺利结束
+    FAILED = "failed"  # 执行失败
 
 
 class taskType(Enum):
@@ -43,10 +46,83 @@ class serverAddress:
     def identity(self):
         return f"{self.ip}:{self.port}"
 
+
 class filePath:
-    def __init__(self, server: serverAddress, path: str):
+    def __init__(self, server: serverAddress, path: str, task=None):
         self.serverAddress: serverAddress = server
         self.path: str = path
+        # 记录由哪个任务产生, 当文件获取失败时,重新执行之间的任务
+        self.generated_by_task: Optional[Task] = task
+
+
+class Task:
+    def __init__(self, job_id: str, task_type: taskType, task_index: int, file_path: List[filePath]):
+        self.job_id: str = job_id
+        self.task_id: int = task_index
+        self.task_type: taskType = task_type
+        self.file_path: List[filePath] = file_path
+
+
+class taskProgress():
+    def __init__(self, job_id: str, task_type: taskType, task_index: int, interval: int = 10):
+        self.job_id: str = job_id
+        self.task_type: taskType = task_type
+        self.task_index: int = task_index
+        self.task_status: taskStatus = taskStatus.WAITING
+        self.task_allocation_time: None | int = None
+        self.worker: serverAddress | None = None
+        self.query_interval: int = interval
+
+    def cancel(self) -> None:
+        self.task_status = taskStatus.WAITING
+        self.task_allocation_time = None
+        self.worker = None
+
+    def re_put_task_to_queue(self) -> None:
+        if self.task_type == taskType.MAP:
+            job = JOB_DICT[self.job_id]
+            task = Task(
+                job_id=self.job_id,
+                task_type=self.task_type,
+                task_index=self.task_index,
+                file_path=[job.file_for_map[self.task_index]]
+            )
+            taskQueue.put(task)
+        else:
+            job = JOB_DICT[self.job_id]
+            file_for_reduce = [x[self.task_index] for x in job.file_for_reduce]
+            task = Task(
+                job_id=self.job_id,
+                task_type=self.task_type,
+                task_index=self.task_index,
+                file_path=file_for_reduce
+            )
+
+    def check_worker_alive(self) -> bool:
+        assert self.worker != None
+        if worker_heartbeat_dict.get(self.worker.identity()) == None:
+            return False
+        return True
+
+    def check_worker_alive_loop(self) -> None:
+        while True:
+            if self.task_type == taskType.MAP:
+                if self.task_status == taskStatus.WAITING or self.task_status == taskStatus.QUEUE:
+                    time.sleep(1)
+                    pass
+
+                elif self.task_status == taskStatus.FINISH:
+                    return
+
+                assert self.task_status == taskStatus.DOING
+                assert self.worker != None, "DOING 状态一定分配了worker"
+                if not self.check_worker_alive():
+                    self.task_status = taskStatus.WAITING
+                    self.task_allocation_time = None
+                    self.worker = None
+                    # TODO: Log
+                    self.re_put_task_to_queue()
+                time.sleep(self.query_interval)
 
 
 class Job:
@@ -55,6 +131,7 @@ class Job:
         self.job_id: str = job_id
         self.map_num: int = request.mapNum
         self.reduce_num: int = request.reduceNum
+        self.job_upload_time: int = int(time.time())
         self.client_server_address: serverAddress = serverAddress(
             ip=request.serverAddress.ip,
             port=request.serverAddress.port,
@@ -66,71 +143,23 @@ class Job:
         self.file_for_map: List[filePath] = [
             filePath(server=self.client_server_address, path=path.path)
             for path in request.filePaths]
-        self.file_for_reduce: List[List[Optional[filePath]]] = [
-            [None for _ in range(request.reduceNum)]
-            for _ in range(request.mapNum)
-        ]
+        self.file_for_reduce: List[List[filePath]] = [[]
+                                                      for _ in range(request.mapNum)]
         self.status: jobStatus = jobStatus.WAITING
-        self.map_task_status: List[taskStatus] = [
-            taskStatus.WAITING for _ in range(request.mapNum)]
-        self.reduce_task_status: List[taskStatus] = [
-            taskStatus.WAITING for _ in range(request.reduceNum)]
+        self.map_task_progress: List[taskProgress] = [
+            taskProgress(job_id=job_id, task_type=taskType.MAP, task_index=i)
+            for i in range(request.mapNum)
+        ]
+        self.reduce_task_progress: List[taskProgress] = [
+            taskProgress(
+                job_id=job_id, task_type=taskType.REDUCE, task_index=i)
+            for i in range(request.reduceNum)
+        ]
 
     def some_method(self):  # 示例方法，示范如何使用锁
         with self.lock:
             # 进行线程安全操作
             pass
-
-
-class Task:
-    def __init__(self, job_id: str, task_type: taskType, task_id: int, file_path: List[filePath]):
-        self.job_id: str = job_id
-        self.task_id: int = task_id
-        self.task_type: taskType = task_type
-        self.file_path: List[filePath] = file_path
-
-
-class taskProgress():
-    def __init__(self, task: Task,  interval: int = 10):
-        self.task: Task = task
-        self.task_status: taskStatus = taskStatus.WAITING
-        self.task_allocation_time: None | int = None
-        self.worker: serverAddress | None = None
-        # 查询间隔
-        self.query_interval: int = interval
-
-    def cancel(self) -> None:
-        self.task_status = taskStatus.WAITING
-        self.task_allocation_time = None
-        self.worker = None
-
-    def check_worker_alive(self) -> bool:
-        assert self.worker != None
-        if worker_heartbeat_dict.get(self.worker.identity()) == None:
-            return False
-        return True
-
-    def re_put_task_to_queue(self) -> None:
-        taskQueue.put(self.task)
-
-    def check_worker_alive_loop(self) -> None:
-        while True:
-            if self.task_status == taskStatus.WAITING:
-                time.sleep(1)
-                pass
-
-            elif self.task_status == taskStatus.FINISH:
-                return
-
-            assert self.task_status == taskStatus.DOING
-            assert self.worker != None, "DOING 状态一定分配了worker"
-            if not self.check_worker_alive():
-                self.task_status = taskStatus.WAITING
-                self.task_allocation_time = None
-                self.worker = None
-                # TODO: Log
-                self.re_put_task_to_queue()
-            time.sleep(self.query_interval)
 
 
         # 记录正在执行的任务
@@ -157,9 +186,13 @@ def generate_map_task_from_Queue():
                     f"gnerate_map_task: job: {job.job_id} status is not waiting")
             for i in range(job.map_num):
                 map_task = Task(job_id=job.job_id, task_type=taskType.MAP,
-                                task_id=i, file_path=[job.file_for_map[i]])
+                                task_index=i, file_path=[job.file_for_map[i]])
                 taskQueue.put(map_task)
-                job.map_task_status[i] = taskStatus.DOING
+                job.map_task_progress[i] = taskProgress(
+                    job_id=job.job_id,
+                    task_type=taskType.MAP,
+                    task_index=i,
+                )
             job.status = jobStatus.MAPPING
 
 
