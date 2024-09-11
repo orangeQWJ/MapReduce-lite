@@ -56,11 +56,20 @@ class filePath:
 
 
 class Task:
-    def __init__(self, job_id: str, task_type: taskType, task_index: int, file_path: List[filePath]):
+    def __init__(self, job_id: str, task_type: taskType, task_index: int):
         self.job_id: str = job_id
         self.task_id: int = task_index
         self.task_type: taskType = task_type
-        self.file_path: List[filePath] = file_path
+        self.function_path: filePath = JOB_DICT[job_id].map_reduce_func_path
+        if task_type == taskType.MAP:
+            self.file_path: List[filePath] = [
+                JOB_DICT[job_id].file_for_map[task_index]]
+        else:
+            for x in JOB_DICT[job_id].file_for_reduce:
+                assert len(
+                    x) == JOB_DICT[job_id].reduce_num, "reduce 任务所需要的中间文件不存在"
+            self.file_path: List[filePath] = [x[task_index]
+                                              for x in JOB_DICT[job_id].file_for_reduce]
 
 
 class taskProgress():
@@ -80,22 +89,17 @@ class taskProgress():
 
     def re_put_task_to_queue(self) -> None:
         if self.task_type == taskType.MAP:
-            job = JOB_DICT[self.job_id]
             task = Task(
                 job_id=self.job_id,
                 task_type=self.task_type,
                 task_index=self.task_index,
-                file_path=[job.file_for_map[self.task_index]]
             )
             taskQueue.put(task)
         else:
-            job = JOB_DICT[self.job_id]
-            file_for_reduce = [x[self.task_index] for x in job.file_for_reduce]
             task = Task(
                 job_id=self.job_id,
                 task_type=self.task_type,
                 task_index=self.task_index,
-                file_path=file_for_reduce
             )
 
     def check_worker_alive(self) -> bool:
@@ -186,7 +190,7 @@ def generate_map_task_from_Queue():
                     f"gnerate_map_task: job: {job.job_id} status is not waiting")
             for i in range(job.map_num):
                 map_task = Task(job_id=job.job_id, task_type=taskType.MAP,
-                                task_index=i, file_path=[job.file_for_map[i]])
+                                task_index=i)
                 taskQueue.put(map_task)
                 job.map_task_progress[i] = taskProgress(
                     job_id=job.job_id,
