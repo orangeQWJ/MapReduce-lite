@@ -39,8 +39,6 @@ class ExpiringDict:
     def __repr__(self):
         return repr(self.store)
 
-d = dict()
-d.get("one", "two")
 
 if __name__ == "__main__":
     # 示例

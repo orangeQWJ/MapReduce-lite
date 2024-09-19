@@ -14,6 +14,8 @@ import utils
 
 
 worker_heartbeat_dict: utils.ExpiringDict = utils.ExpiringDict()
+task_heartbeat_dict: utils.ExpiringDict = utils.ExpiringDict()
+
 # 任务执行的阶段
 
 
@@ -49,11 +51,12 @@ class serverAddress:
 
 
 class filePath:
-    def __init__(self, server: serverAddress, path: str, task=None):
+    # def __init__(self, server: serverAddress, path: str, task=None):
+    def __init__(self, server: serverAddress, path: str):
         self.serverAddress: serverAddress = server
         self.path: str = path
         # 记录由哪个任务产生, 当文件获取失败时,重新执行之间的任务
-        self.generated_by_task: Optional[Task] = task
+        # self.generated_by_task: Optional[Task] = task
 
 
 class Task:
@@ -72,6 +75,9 @@ class Task:
             self.file_path: List[filePath] = [x[task_index]
                                               for x in JOB_DICT[job_id].file_for_reduce]
 
+    def generate_description_id(self) -> str:
+        return f"{self.job_id}-{self.task_type}-{self.task_id}"
+
 
 class taskProgress():
     def __init__(self, job_id: str, task_type: taskType, task_index: int, interval: int = 10):
@@ -84,7 +90,7 @@ class taskProgress():
         self.worker: serverAddress | None = None
         self.query_alive_interval: int = interval
 
-    def cancel(self) -> None:
+    def restart(self) -> None:
         self.task_status = taskStatus.WAITING
         self.task_allocation_time = None
         self.worker = None
@@ -103,43 +109,27 @@ class taskProgress():
         taskQueue.put(task)
     """
 
-    def check_worker_alive(self) -> bool:
-        assert self.worker != None, "没有分配work,但是在做心跳检查"
-        if worker_heartbeat_dict.get(self.worker.identity()) == None:
-            return False
+    def check_task_input_file_accessible(self) -> bool:
+        """检查当前task所需的文件是否可获取"""
+        # TODO:
         return True
 
-    """
-    def check_worker_alive_loop(self) -> None:
-        while True:
-            if self.task_type == taskType.MAP:
-                if self.task_status == taskStatus.WAITING or self.task_status == taskStatus.QUEUE:
-                    time.sleep(1)
-                    pass
+    def check_task_output_file_acccessibale(self) -> bool:
+        # TODO:
+        return True
 
-                elif self.task_status == taskStatus.FINISH:
-                    return
+    def is_worker_active_for_current_task(self) -> bool:
+        """检查指定 worker 是否在为当前任务服务"""
+        # TODO:
+        return True
 
-                assert self.task_status == taskStatus.DOING
-                assert self.worker != None, "DOING 状态一定分配了worker"
-                if not self.check_worker_alive():
-                    self.task_status = taskStatus.WAITING
-                    self.task_allocation_time = None
-                    self.worker = None
-                    # TODO: Log
-                    self.put_task_to_queue()
-                time.sleep(self.query_alive_interval)
-    """
+    def task_finish(self) -> None:
+        with self.task_status_lock:
+            self.task_status = taskStatus.FINISH
 
     def monitor(self) -> None:
         while True:
-            time.sleep(1)  # 其他threading有机会获取lock
-            # reduce 任务要等到JOB进行到REDUCE阶段才能运行
-            if self.task_type == taskType.REDUCE and JOB_DICT[self.job_id].status == jobStatus.MAPPING:
-                # NOTE: job.status == REDUCING, redcue task执行中可能需要重启map taks.
-                # NOTE: job.status == MAPPING, 不可能需要 reduce task
-                assert self.task_status == taskStatus.WAITING
-                pass
+            time.sleep(0.5)
             with self.task_status_lock:
                 if self.task_status == taskStatus.WAITING:
                     # NOTE: assign 可能会阻塞
@@ -147,21 +137,35 @@ class taskProgress():
                     if success:
                         assert worker != None
                         self.worker = worker
+                        self.task_allocation_time = int(time.time())
                         self.task_status = taskStatus.ASSIGNED
                     else:
                         self.task_status = taskStatus.WAITING
+
                 elif self.task_status == taskStatus.ASSIGNED:
-                    assert self.worker != None, "DOING 状态一定分配了worker"
-                    if self.check_worker_alive():
-                        time.sleep(self.query_alive_interval)
-                    else:
+                    assert self.worker != None, "ASSIGNED 状态一定分配了worker"
+                    # 检查当前task所需要的文件是否可获取
+                    if not self.check_task_input_file_accessible():
+                        # self.restart()
                         self.task_status = taskStatus.WAITING
+                        self.task_allocation_time = None
+                        self.worker = None
+                        pass
+                    # 是否有worker在为当前task服务
+                    if not self.is_worker_active_for_current_task():
+                        # self.restart()
+                        self.task_status = taskStatus.WAITING
+                        self.task_allocation_time = None
+                        self.worker = None
+                        pass
                 elif self.task_status == taskStatus.FINISH:
-                    continue
-                elif self.task_status == taskStatus.NEED_RESATRT:
-                    self.task_status = taskStatus.WAITING
-                elif self.task_status == taskStatus.DONE:
-                    return
+                    assert self.worker != None, "FINISH 状态一定分配了worker"
+                    if not self.check_task_output_file_acccessibale():
+                        # 需要重新生产
+                        # self.restart()
+                        self.task_status = taskStatus.WAITING
+                        self.task_allocation_time = None
+                        self.worker = None
 
     def monitor_in_background(self) -> None:
         monitor_thread = threading.Thread(target=self.monitor)
@@ -203,6 +207,7 @@ class Job:
         with self.lock:
             # 进行线程安全操作
             pass
+
 
         # 记录正在执行的任务
 JOB_DICT: Dict[str, Job] = dict()
